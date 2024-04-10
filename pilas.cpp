@@ -1,191 +1,194 @@
+#include <malloc.h>
 #include <iostream>
-#include <cstdlib> // Para malloc
-#include <cstring> // Para strcpy
-
 using namespace std;
 
-struct nodo {
-    char placa[51]; // eta monda define un char array para la placa con un máximo de 50 caracteres
-    string tipo; // "Carro" o "Moto", pa que sepa...tontito
-    nodo* sig;
+// Definición de la estructura Parqueadero4 para almacenar vehículos
+struct Parqueadero4 {
+    int placa;
+    Parqueadero4 *sig;
 };
 
-struct nodo *aux, *top_carros, *top_motos, *top_aux;
-int totalIngresos = 0;
+// Declaración de variables y punteros para el parqueadero de autos y motos
+Parqueadero4 *topauto, *topmoto, *auxauto, *auxmoto, *actualmoto, *actualauto, *anteriormoto, *anteriorauto;
+int valorAuto = 0;
+int valorMoto = 0;
+int auxiliarauto = 0;
+int auxiliarmoto = 0;
+int eliminarAuto = 0;
+int eliminarMoto = 0;
+int auxeliminarAuto = 0;
+int auxeliminarMoto = 0;
+int totalDevengado = 0;
+int devengadoAuto = 0;
+int devengadoMoto = 0;
 
-void registrar(char placa[], string tipo) {
-    aux = static_cast<struct nodo*>(malloc(sizeof(struct nodo))); // aqui se hace uso de malloc
-    strcpy(aux->placa, placa); // en esta vuelta se copia la placa al char array
-    aux->tipo = tipo;
-    aux->sig = NULL;
+// Función para parquear un vehículo
+void parquear() {
+    int opc = 0;
+    cout << "Ingrese el tipo de vehículo que quiere parquear" << endl;
+    cout << "1: Carro" << endl;
+    cout << "2: Moto" << endl;
+    cout << "Ingrese su opcion: ";
+    cin >> opc;
 
-    if (tipo == "Moto") {
-        if (top_motos == NULL) {
-            top_motos = aux;
-        } else {
-            aux->sig = top_motos;
-            top_motos = aux;
-        }
-    } else if (tipo == "Carro") {
-        if (top_carros == NULL) {
-            top_carros = aux;
-        } else {
-            aux->sig = top_carros;
-            top_carros = aux;
-        }
-    }
-}
-
-void mostrar() {
-    cout << endl << "Motos:" << endl;
-    for (aux = top_motos; aux != NULL; aux = aux->sig) {
-        cout << "Placa: " << aux->placa << endl;
-    }
-    cout << endl << "Carros:" << endl;
-    for (aux = top_carros; aux != NULL; aux = aux->sig) {
-        cout << "Placa: " << aux->placa << endl;
-    }
-}
-
-void sacarVehiculo(char placa[]) {
-    char** movidos = NULL; // este array dinámico sirve para almacenar las placas de los vehículos movidos (no funciona pa ni verga)
-    int numMovidos = 0;
-    int cobro = 0;
-    bool encontrado = false;
-
-    // deberia buscar y sacar el vehículo del parqueadero, pero no va :,(
-    while (top_motos != NULL && !encontrado) {
-        if (strcmp(top_motos->placa, placa) == 0) {
-            encontrado = true;
-            cobro = 500; // Cobro por moto: $500 lukas
-            aux = top_motos;
-            top_motos = top_motos->sig;
-            free(aux);
-        } else {
-            numMovidos++;
-            movidos = (char**)realloc(movidos, numMovidos * sizeof(char*)); // pa aumentar el tamaño del array (le hace el campito al proximo dato)
-            movidos[numMovidos - 1] = strdup(top_motos->placa); // pa copiar la placa al array de movidos
-            aux = top_motos;
-            top_motos = top_motos->sig;
-            aux->sig = top_aux;
-            top_aux = aux;
-        }
-    }
-
-    // Si no se encontró la moto, buscar en los carros, pa que sepa >:/
-    if (!encontrado) {
-        while (top_carros != NULL && !encontrado) {
-            if (strcmp(top_carros->placa, placa) == 0) {
-                encontrado = true;
-                cobro = 1000; // Cobro por carro: $1000 lukas
-                aux = top_carros;
-                top_carros = top_carros->sig;
-                free(aux);
+    switch (opc) {
+        case 1: // autos
+            auxauto = (Parqueadero4 *)malloc(sizeof(Parqueadero4));
+            if (topauto == NULL) {
+                topauto = auxauto;
+                cout << "Ingrese la placa del auto: ";
+                cin >> topauto->placa;
+                topauto->sig = NULL;
             } else {
-                numMovidos++;
-                movidos = (char**)realloc(movidos, numMovidos * sizeof(char*)); // Aumentar el tamaño del array (como el anterior...tontito)
-                movidos[numMovidos - 1] = strdup(top_carros->placa); // Copiar la placa al array de movidos (lo mismo)
-                aux = top_carros;
-                top_carros = top_carros->sig;
-                aux->sig = top_aux;
-                top_aux = aux;
+                auxauto->sig = topauto;
+                cout << "Ingrese la placa del siguiente auto: ";
+                cin >> auxauto->placa;
+                topauto = auxauto;
             }
-        }
-    }
-
-    // pa reubicar los vehículos movidos si no se encontró el vehículo, no funciona, toca mejorar la logica
-    if (!encontrado) {
-        for (int i = 0; i < numMovidos; i++) {
-            registrar(movidos[i], "Carro"); // Todos los movidos se tratan como carros, para la prueba, pero pasa los datos de la pila moto a carro
-            free(movidos[i]); // pa liberar memoria para cada placa copiada
-        }
-        free(movidos); // pa liberar memoria para el array de placas movidas
-    }
-
-    // pa mostrar el cobro realizado si se encontró el vehículo
-    if (cobro > 0) {
-        cout << "Se ha retirado el vehículo con placa " << placa << " del parqueadero." << endl;
-        cout << "Cobro realizado: $" << cobro << endl;
-    } else {
-        cout << "La placa ingresada no corresponde a ningún vehículo en el parqueadero." << endl;
-    }
-}
-
-
-void calcularIngresos() {
-    int totalCarros = 0;
-    int totalMotos = 0;
-
-    for (aux = top_motos; aux != NULL; aux = aux->sig) {
-        totalMotos += 500; // Cada moto paga $500 lukas
-    }
-
-    for (aux = top_carros; aux != NULL; aux = aux->sig) {
-        totalCarros += 1000; // Cada carro paga $1000 lukas
-    }
-
-    cout << "Ingresos por motos: $" << totalMotos << endl;
-    cout << "Ingresos por carros: $" << totalCarros << endl;
-}
-
-int main() {
-    int opc;
-    char placa[51]; // Se define un char array para la placa con un máximo de 50 caracteres... ya se que son 51 >:/
-    string tipo;
-    top_motos = NULL;
-    top_carros = NULL;
-    top_aux = NULL;
-
-    do {
-        cout << "------ MENU ------" << endl;
-        cout << "1. Registrar moto" << endl;
-        cout << "2. Registrar carro" << endl;
-        cout << "3. Mostrar vehiculos en el parqueadero" << endl;
-        cout << "4. Sacar vehiculo" << endl;
-        cout << "5. Calcular ingresos totales" << endl;
-        cout << "6. Salir" << endl;
-        cout << "------------------" << endl;
-        cout << "Seleccione una opcion: ";
-        cin >> opc;
-
-        switch (opc) {
-            case 1:
+            auxiliarauto = 1000;
+            valorAuto += auxiliarauto;
+            auxiliarauto = 0;
+            break;
+        case 2: // motos
+            auxmoto = (Parqueadero4 *)malloc(sizeof(Parqueadero4));
+            if (topmoto == NULL) {
+                topmoto = auxmoto;
                 cout << "Ingrese la placa de la moto: ";
-                cin.ignore(); // Limpiar el buffer (eta verga la puse pero no se ni pa que)
-                cin.getline(placa, 51); // pa poder leer la placa con espacios y límite de 50 caracteres
-                registrar(placa, "Moto");
+                cin >> topmoto->placa;
+                topmoto->sig = NULL;
+            } else {
+                auxmoto->sig = topmoto;
+                cout << "Ingrese la placa del siguiente moto: ";
+                cin >> auxmoto->placa;
+                topmoto = auxmoto;
+            }
+            auxiliarmoto = 500;
+            valorMoto += auxiliarmoto;
+            auxiliarmoto = 0;
+            break;
+        default:
+            cout << "Opcion invalida. Intente nuevamente." << endl;
+            break;
+    }
+}
+
+// Función para mostrar los vehículos parqueados
+void mostrar() {
+    if (topauto == NULL && topmoto == NULL) {
+        cout << "No hay vehiculos ingresados para ser mostrados. Intente por ingresar uno." << endl;
+        return;
+    }
+
+    cout << "Autos parqueados:" << endl;
+    for (auxauto = topauto; auxauto != NULL; auxauto = auxauto->sig) {
+        cout << "===" << endl;
+        cout << auxauto->placa << endl;
+        cout << "===" << endl;
+    }
+
+    cout << "Motos parqueadas:" << endl;
+    for (auxmoto = topmoto; auxmoto != NULL; auxmoto = auxmoto->sig) {
+        cout << "===" << endl;
+        cout << auxmoto->placa << endl;
+        cout << "===" << endl;
+    }
+}
+
+// Función para eliminar un vehículo del parqueadero
+void eliminar() {
+    int placa;
+    cout << "Ingrese la placa del vehículo a despachar: ";
+    cin >> placa;
+
+    Parqueadero4 *temp_auto, *prev_auto;
+    temp_auto = topauto;
+    prev_auto = NULL;
+
+    // Buscar y eliminar en la sección de autos
+    while (temp_auto != NULL) {
+        if (temp_auto->placa == placa) {
+            if (prev_auto == NULL) {
+                topauto = temp_auto->sig;
+            } else {
+                prev_auto->sig = temp_auto->sig;
+            }
+            delete temp_auto;
+            cout << "Vehículo con placa " << placa << " despachado del parqueadero de autos." << endl;
+            return;
+        }
+        prev_auto = temp_auto;
+        temp_auto = temp_auto->sig;
+    }
+
+    Parqueadero4 *temp_moto, *prev_moto;
+    temp_moto = topmoto;
+    prev_moto = NULL;
+
+    // Buscar y eliminar en la sección de motos
+    while (temp_moto != NULL) {
+        if (temp_moto->placa == placa) {
+            if (prev_moto == NULL) {
+                topmoto = temp_moto->sig;
+            } else {
+                prev_moto->sig = temp_moto->sig;
+            }
+            delete temp_moto;
+            cout << "Vehículo con placa " << placa << " despachado del parqueadero de motos." << endl;
+            return;
+        }
+        prev_moto = temp_moto;
+        temp_moto = temp_moto->sig;
+    }
+
+    cout << "El vehículo con placa " << placa << " no se encuentra registrado en el parqueadero." << endl;
+}
+
+// Función para calcular y mostrar el total devengado
+void totalParquear() {
+    devengadoAuto = valorAuto - eliminarAuto;
+    devengadoMoto = valorMoto - eliminarMoto;
+    cout << "Dinero recolectado del parqueadero de autos: $" << devengadoAuto << endl;
+    cout << "Dinero recolectado del parqueadero de motos: $" << devengadoMoto << endl;
+    totalDevengado = devengadoAuto + devengadoMoto;
+    cout << "El total devengado es: $" << totalDevengado << endl;
+}
+
+// Función principal que controla el menú del sistema
+int main() {
+    int opcion;
+    do {
+        cout << "Bienvenido al Sistema de Manejo de Parqueadero" << endl;
+        cout << "Opciones de Parqueadero Disponibles:" << endl;
+        cout << "1. Parquear vehiculo" << endl;
+        cout << "2. Mostrar vehiculos Parqueados" << endl;
+        cout << "3. Despachar vehiculo" << endl;
+        cout << "4. Mostrar el total devengado" << endl;
+        cout << "5. Salir" << endl;
+        cout << "Ingrese la opcion deseada: ";
+        cin >> opcion;
+
+        switch (opcion) {
+            case 1:
+                parquear();
                 break;
             case 2:
-                cout << "Ingrese la placa del carro: ";
-                cin.ignore(); // pa limpiar el buffer
-                cin.getline(placa, 51); // Leer la placa con espacios y límite de 50 caracteres
-                registrar(placa, "Carro");
+                mostrar();
                 break;
             case 3:
-                mostrar();
+                eliminar();
                 break;
             case 4:
-                cout << "Ingrese la placa del vehiculo a sacar: ";
-                cin.ignore(); // Limpiar el buffer (nota: La función cin.ignore() se utiliza comúnmente para descartar caracteres adicionales del búfer de entrada después de leer un valor con cin, especialmente cuando se combina con getline() para evitar problemas con los saltos de línea.)
-                cin.getline(placa, 51); // Leer la placa con espacios y límite de 50 caracteres
-                sacarVehiculo(placa);
-                mostrar();
+                totalParquear();
                 break;
             case 5:
-                calcularIngresos();
-                break;
-            case 6:
-                cout << "Saliendo del programa..." << endl;
+                cout << "Programa Finalizado, gracias por usar nuestro Software." << endl;
                 break;
             default:
-                cout << "Opcion no valida. Intente de nuevo." << endl;
+                cout << "Opcion no valida. Intente nuevamente." << endl;
+                break;
         }
-
-        cout << "------------------" << endl;
-
-    } while (opc != 6);
+    } while (opcion != 5);
 
     return 0;
 }
-
 //me quiero mataaaaaaaa
